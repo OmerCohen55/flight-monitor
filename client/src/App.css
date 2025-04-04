@@ -1,24 +1,29 @@
+/* Root container of the application */
 .App {
-  direction: rtl;
+  direction: rtl; /* Right-to-left layout for Hebrew */
   text-align: center;
   font-family: Arial, sans-serif;
   margin-top: 50px;
 }
 
+/* Form layout – centered and aligned to the right */
 form {
   display: inline-block;
   text-align: right;
 }
 
+/* Spacing between form fields */
 form div {
   margin: 10px 0;
 }
 
+/* Styling for all input fields */
 input {
   padding: 5px;
   margin-right: 10px;
 }
 
+/* Basic button styling */
 button {
   padding: 10px 20px;
 }

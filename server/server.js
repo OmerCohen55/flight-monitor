@@ -5,10 +5,14 @@ const cors = require('cors');
 const app = express();
 const PORT = 3001;
 
+// Enable CORS and JSON body parsing
 app.use(cors());
 app.use(express.json());
 
-// התחברות למסד הנתונים
+/*
+ * Connect to local MongoDB database named "flight-monitor"
+ * Using Mongoose for schema and model management
+ */
 mongoose.connect('mongodb://localhost:27017/flight-monitor', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -16,7 +20,13 @@ mongoose.connect('mongodb://localhost:27017/flight-monitor', {
 .then(() => console.log('Connected to MongoDB'))
 .catch((err) => console.error('MongoDB connection error:', err));
 
-// מודל של נתוני הטיסה
+/*
+ * Flight data schema definition
+ * Each entry contains:
+ *  - altitude: number (0–3000)
+ *  - his: number (0–360)
+ *  - adi: number (0 or 100)
+ */
 const flightSchema = new mongoose.Schema({
   altitude: Number,
   his: Number,
@@ -24,7 +34,10 @@ const flightSchema = new mongoose.Schema({
 });
 const FlightData = mongoose.model('FlightData', flightSchema);
 
-// POST: קבלת נתונים ושמירה
+/*
+ * POST /api/data
+ * Receives flight data and saves it to MongoDB
+ */
 app.post('/api/data', async (req, res) => {
   const { altitude, his, adi } = req.body;
   try {
@@ -36,7 +49,10 @@ app.post('/api/data', async (req, res) => {
   }
 });
 
-// GET: החזרת כל הנתונים
+/*
+ * GET /api/data
+ * Returns all stored flight data from MongoDB
+ */
 app.get('/api/data', async (req, res) => {
   try {
     const allData = await FlightData.find();
@@ -46,7 +62,7 @@ app.get('/api/data', async (req, res) => {
   }
 });
 
-// הפעלת השרת
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

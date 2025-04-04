@@ -1,135 +1,178 @@
 import React, { useState, useEffect } from "react";
-import TextDisplay from "./components/TextDisplay";
-import VisualDisplay from "./components/VisualDisplay";
-import DataTable from "./components/DataTable";
 import "./App.css";
+import VisualDisplay from "./components/VisualDisplay";
+import TextDisplay from "./components/TextDisplay";
 
+/*
+ * Component: App
+ * Purpose: Main component of the Flight Monitor project.
+ * Features:
+ *  - Collects user input for Altitude, HIS, and ADI.
+ *  - Displays either visual or text view based on user selection.
+ *  - Stores and displays historical input values in a table.
+ *  - Communicates with backend via REST API.
+ */
 function App() {
+  // State variables for input fields
   const [altitude, setAltitude] = useState("");
   const [his, setHis] = useState("");
   const [adi, setAdi] = useState("");
-  const [displayMode, setDisplayMode] = useState(""); // ברירת מחדל – כלום
+
+  // Stores the fetched list of all previous readings
   const [data, setData] = useState([]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Manages the current selected view: "TEXT", "VISUAL", or null
+  const [view, setView] = useState(null);
 
-    const a = Number(altitude);
-    const h = Number(his);
-    const ad = Number(adi);
+  // Controls whether the input form is visible or hidden
+  const [showForm, setShowForm] = useState(false);
 
-    // בדיקות תקינות
-    if (isNaN(a) || a < 0 || a > 3000) {
-      alert("Altitude must be between 0 and 3000");
-      return;
-    }
-    if (isNaN(h) || h < 0 || h > 360) {
-      alert("HIS must be between 0 and 360");
-      return;
-    }
-    if (isNaN(ad) || ad < -100 || ad > 100) {
-      alert("ADI must be between -100 and 100");
-      return;
-    }
-
-    const payload = { altitude: a, his: h, adi: ad };
-
-    try {
-      const res = await fetch("http://localhost:3001/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        alert("Data sent successfully");
-        fetchData();
-      } else {
-        alert("Failed to send data");
-      }
-    } catch (err) {
-      alert("An error occurred");
-    }
-  };
-
+  // Fetches data from the backend server (initial load)
   const fetchData = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/data");
-      const json = await res.json();
-      setData(json.reverse());
+      const response = await fetch("http://localhost:3001/api/data");
+      const json = await response.json();
+      setData(json);
     } catch (err) {
       console.error("Error fetching data:", err);
-      setData([]);
     }
   };
 
+  // Load data once when the component is mounted
   useEffect(() => {
     fetchData();
   }, []);
 
+  // Handles form submission and validation
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const altitudeVal = parseInt(altitude);
+    const hisVal = parseInt(his);
+    const adiVal = parseInt(adi);
+
+    // Validate input values before sending
+    if (altitudeVal < 0 || altitudeVal > 3000) {
+      alert("Altitude must be between 0 and 3000");
+      return;
+    }
+    if (hisVal < 0 || hisVal > 360) {
+      alert("HIS must be between 0 and 360");
+      return;
+    }
+    if (adiVal !== 0 && adiVal !== 100) {
+      alert("ADI must be 0 or 100");
+      return;
+    }
+
+    const newData = { altitude: altitudeVal, his: hisVal, adi: adiVal };
+
+    // Send validated data to the backend
+    try {
+      const response = await fetch("http://localhost:3001/api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newData),
+      });
+
+      if (response.ok) {
+        alert("Data sent successfully");
+        fetchData(); // Refresh table data
+        setAltitude("");
+        setHis("");
+        setAdi("");
+      } else {
+        alert("Failed to send data");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      alert("An error occurred");
+    }
+  };
+
   return (
-    <div className="App" style={{ textAlign: "center", fontFamily: "Arial" }}>
+    <div className="App" style={{ padding: "20px", maxWidth: "900px", margin: "0 auto", textAlign: "center" }}>
       <h1>Flight Monitor</h1>
 
-      {/* כפתורים */}
-      <div style={{ marginBottom: "20px" }}>
-        <button onClick={() => setDisplayMode(displayMode === "table" ? "" : "table")}>
-          {displayMode === "table" ? "−" : "+"}
+      {/* Control buttons: switch view and toggle form */}
+      <div style={{ display: "flex", justifyContent: "center", gap: "15px", margin: "20px 0" }}>
+        <button onClick={() => setView("TEXT")}>TEXT</button>
+        <button onClick={() => setView("VISUAL")}>VISUAL</button>
+        <button onClick={() => setShowForm(!showForm)}>
+          {showForm ? "–" : "+"}
         </button>
-        <button onClick={() => setDisplayMode("text")}>TEXT</button>
-        <button onClick={() => setDisplayMode("visual")}>VISUAL</button>
       </div>
 
-      {/* טופס קלט */}
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "10px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <label style={{ width: "80px", textAlign: "right" }}>Altitude:</label>
-          <input
-            type="number"
-            value={altitude}
-            onChange={(e) => setAltitude(e.target.value)}
-            style={{ padding: "5px", width: "200px" }}
-          />
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <label style={{ width: "80px", textAlign: "right" }}>HIS:</label>
-          <input
-            type="number"
-            value={his}
-            onChange={(e) => setHis(e.target.value)}
-            style={{ padding: "5px", width: "200px" }}
-          />
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <label style={{ width: "80px", textAlign: "right" }}>ADI:</label>
-          <input
-            type="number"
-            value={adi}
-            onChange={(e) => setAdi(e.target.value)}
-            style={{ padding: "5px", width: "200px" }}
-          />
-        </div>
-        <button type="submit" style={{ padding: "6px 12px" }}>SEND</button>
-      </form>
+      {/* Input form – shown only when form is toggled open */}
+      {showForm && (
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginBottom: "30px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <label>Altitude:</label>
+            <input
+              type="number"
+              value={altitude}
+              onChange={(e) => setAltitude(e.target.value)}
+              placeholder="0 - 3000"
+            />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <label>HIS:</label>
+            <input
+              type="number"
+              value={his}
+              onChange={(e) => setHis(e.target.value)}
+              placeholder="0 - 360"
+            />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <label>ADI:</label>
+            <input
+              type="number"
+              value={adi}
+              onChange={(e) => setAdi(e.target.value)}
+              placeholder="100 - (100-)"
+            />
+          </div>
+          <button type="submit">SEND</button>
+        </form>
+      )}
 
-      {/* תצוגות לפי מצב */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: "40px", gap: "40px" }}>
-        {displayMode === "table" && <DataTable data={data} />}
-        {displayMode === "visual" && (
-          <VisualDisplay altitude={Number(altitude)} his={Number(his)} adi={Number(adi)} />
-        )}
-        {displayMode === "text" && (
-          <TextDisplay altitude={Number(altitude)} his={Number(his)} adi={Number(adi)} />
-        )}
-      </div>
+      {/* Conditional display: Visual or Text view based on selection */}
+      {view === "VISUAL" && data.length > 0 && (
+        <VisualDisplay
+          altitude={data[data.length - 1].altitude}
+          his={data[data.length - 1].his}
+          adi={data[data.length - 1].adi}
+        />
+      )}
+      {view === "TEXT" && data.length > 0 && (
+        <TextDisplay
+          altitude={data[data.length - 1].altitude}
+          his={data[data.length - 1].his}
+          adi={data[data.length - 1].adi}
+        />
+      )}
+
+      {/* Always visible: Table of previous readings */}
+      <h2 style={{ marginTop: "40px" }}>Previous Readings</h2>
+      <table style={{ margin: "0 auto", borderCollapse: "collapse", minWidth: "300px" }}>
+        <thead>
+          <tr>
+            <th style={{ border: "1px solid black", padding: "6px" }}>Altitude</th>
+            <th style={{ border: "1px solid black", padding: "6px" }}>HIS</th>
+            <th style={{ border: "1px solid black", padding: "6px" }}>ADI</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((entry, index) => (
+            <tr key={index}>
+              <td style={{ border: "1px solid black", padding: "6px" }}>{entry.altitude}</td>
+              <td style={{ border: "1px solid black", padding: "6px" }}>{entry.his}</td>
+              <td style={{ border: "1px solid black", padding: "6px" }}>{entry.adi}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
