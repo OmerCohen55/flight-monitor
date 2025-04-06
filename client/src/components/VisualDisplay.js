@@ -3,10 +3,10 @@ import React from "react";
 /*
  * Component: VisualDisplay
  * Purpose: Visually displays flight indicators – Altitude, HIS (compass), and ADI.
- * Notes:
- * - ADI is shown as a colored circle (blue, green, gray).
- * - HIS is displayed as a rotating compass needle.
- * - Altitude is shown as a vertical gauge with a horizontal arrow.
+* Notes:
+* - ADI is shown as a colored circle (blue, green, gray).
+* - HIS is shown as a compass.
+* - Altitude is shown as a vertical gauge with a horizontal arrow.
  * Props:
  *   - altitude: Number (0–3000), affects arrow position on altitude bar
  *   - his: Number (degrees), affects rotation of compass needle

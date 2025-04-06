@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
-import VisualDisplay from "./components/VisualDisplay";
-import TextDisplay from "./components/TextDisplay";
+import React, { useState, useEffect } from "react"; // Import React to manage state
+import "./App.css"; // Import the CSS file for styling the App 
+import VisualDisplay from "./components/VisualDisplay"; // Import the VisualDisplay component to show data visually
+import TextDisplay from "./components/TextDisplay"; // Import the TextDisplay component to show data in text format
 
 /*
  * Component: App
@@ -12,46 +12,55 @@ import TextDisplay from "./components/TextDisplay";
  *  - Stores and displays historical input values in a table.
  *  - Communicates with backend via REST API.
  */
+
 function App() {
   // State variables for input fields
+  // 'altitude' contains the altitude input from the user, 'setAltitude' is the function to update it
   const [altitude, setAltitude] = useState("");
   const [his, setHis] = useState("");
   const [adi, setAdi] = useState("");
 
-  // Stores the fetched list of all previous readings
-  const [data, setData] = useState([]);
+  // 'data' stores the flight data from the server
+  const [data, setData] = useState([]); // Holds all fetched data. 'setData' updates it.
 
-  // Manages the current selected view: "TEXT", "VISUAL", or null
-  const [view, setView] = useState(null);
+  // 'view' manages the selected display mode: "TEXT", "VISUAL", or null
+  const [view, setView] = useState(null); // Holds the display mode. 'setView' changes it.
 
-  // Controls whether the input form is visible or hidden
-  const [showForm, setShowForm] = useState(false);
+  // 'showForm' controls if the input form is visible or not
+  const [showForm, setShowForm] = useState(false); 
 
-  // Fetches data from the backend server (initial load)
-  const fetchData = async () => {
-    try {
-      const response = await fetch("http://localhost:3001/api/data");
-      const json = await response.json();
-      setData(json);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    }
-  };
+// This function fetches the flight data from the server when called
+const fetchData = async () => {
+  try {
+    // Sending a GET request to the server to fetch the flight data
+    const response = await fetch("http://localhost:3001/api/data");
 
-  // Load data once when the component is mounted
+    // Waiting for the server's response and changing it to JSON format - present it in a friendlier way
+    const json = await response.json();
+
+    // Updating the 'data' state with the fetched data (flight data)
+    setData(json);
+  } catch (err) {
+    // If an error occurs during the data fetching process, log it in the console
+    console.error("Error fetching data:", err);
+  }
+};
+
+  // Load data once when the component is loaded
   useEffect(() => {
-    fetchData();
+    fetchData(); // Calls fetchData to get data from the server
   }, []);
 
-  // Handles form submission and validation
+  // Handles form submission and input validation
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); 
 
+    // Converts input values to numbers
     const altitudeVal = parseInt(altitude);
     const hisVal = parseInt(his);
     const adiVal = parseInt(adi);
 
-    // Validate input values before sending
+    // Validates input values
     if (altitudeVal < 0 || altitudeVal > 3000) {
       alert("Altitude must be between 0 and 3000");
       return;
@@ -60,27 +69,32 @@ function App() {
       alert("HIS must be between 0 and 360");
       return;
     }
-    if (adiVal !== 0 && adiVal !== 100) {
-      alert("ADI must be 0 or 100");
+    if (adiVal < -100 && adiVal > 100) {
+      alert("ADI must be between -100 and 100");
       return;
     }
 
+    // Check if any field is empty (not filled by the user)
+    if (altitude === "" || his === "" || adi === "") {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    // Creates an object with the validated data
     const newData = { altitude: altitudeVal, his: hisVal, adi: adiVal };
 
-    // Send validated data to the backend
+    // Sends the data to the backend
     try {
       const response = await fetch("http://localhost:3001/api/data", {
-        method: "POST",
+        method: "POST", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newData),
       });
 
       if (response.ok) {
         alert("Data sent successfully");
-        fetchData(); // Refresh table data
-        setAltitude("");
-        setHis("");
-        setAdi("");
+        fetchData(); // Refreshes data
+        setAltitude(""); setHis(""); setAdi(""); // Resets input fields
       } else {
         alert("Failed to send data");
       }
@@ -103,7 +117,7 @@ function App() {
         </button>
       </div>
 
-      {/* Input form – shown only when form is toggled open */}
+      {/* Input form – shown only when form is changed open */}
       {showForm && (
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginBottom: "30px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -137,7 +151,7 @@ function App() {
         </form>
       )}
 
-      {/* Conditional display: Visual or Text view based on selection */}
+      {/* Display data based on the selected view: Visual or Text */}
       {view === "VISUAL" && data.length > 0 && (
         <VisualDisplay
           altitude={data[data.length - 1].altitude}
@@ -164,6 +178,8 @@ function App() {
           </tr>
         </thead>
         <tbody>
+          {/* Iterates over each entry in the 'data' array, 
+          which was fetched from the backend (MongoDB), and displays it in a table row */}
           {data.map((entry, index) => (
             <tr key={index}>
               <td style={{ border: "1px solid black", padding: "6px" }}>{entry.altitude}</td>
